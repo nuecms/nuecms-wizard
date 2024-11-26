@@ -29,11 +29,12 @@ jobs:
     # Install pnpm
     - name: Install pnpm
       run: |
-        if [ $RUNNER_OS == 'Windows' ]; then
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
           npm install -g pnpm
         else
           npm install -g pnpm
         fi
+      shell: bash  # Explicitly use Bash for the script
 
     # Install dependencies using pnpm
     - name: Install dependencies
