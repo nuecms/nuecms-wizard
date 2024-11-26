@@ -1,54 +1,44 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import path from 'path';
 
 describe('File path creation with path.join()', () => {
-  // test windows with data/config.ts
-  it('should correctly join the current working directory and the relative path, windows with data/config.ts', () => {
-    // Mock process.cwd() to simulate a directory
-    vi.stubGlobal('process', {
-      cwd: vi.fn(() => 'C:\\Users\\YourName\\your-project'),
-    });
-
-    const filePath = path.join(process.cwd(), 'data/config.ts');
-
-    // Check that the path is correctly joined
-    expect(filePath).toBe('C:\\Users\\YourName\\your-project\\data\\config.ts');
-  })
-  // test windows with /data/config.ts
-  it('should correctly join the current working directory and the relative path,  windows with /data/config.ts', () => {
-    // Mock process.cwd() to simulate a directory
-    vi.stubGlobal('process', {
-      cwd: vi.fn(() => 'C:\\Users\\YourName\\your-project'),
-    });
-
-    const filePath = path.join(process.cwd(), '/data/config.ts');
-    // Check that the path is correctly joined
-    expect(filePath).toBe('C:\\Users\\YourName\\your-project\\data\\config.ts');
-  })
-
-  // test unix with data/config.ts
-  it('should correctly join the current working directory and the relative path, unix with data/config.ts', () => {
-    // Mock process.cwd() to simulate a directory
-    vi.stubGlobal('process', {
-      cwd: vi.fn(() => '/Users/YourName/your-project'),
-    });
-
-    const filePath = path.join(process.cwd(), 'data/config.ts');
-
-    // Check that the path is correctly joined
-    expect(filePath).toBe('/Users/YourName/your-project/data/config.ts');
+  beforeEach(() => {
+    vi.restoreAllMocks(); // Ensure no stale mocks interfere
   });
 
-  // test unix with /data/config.ts
-  it('should correctly join the current working directory and the relative path, unix with /data/config.ts', () => {
-    // Mock process.cwd() to simulate a directory
+  const isWindows = process.platform === 'win32'; // Determine if the OS is Windows
+
+  // Test with relative paths
+  it('should correctly join the current working directory and the relative path (data/config.ts)', () => {
+    const cwd = isWindows
+      ? 'C:\\Users\\YourName\\your-project'
+      : '/Users/YourName/your-project';
+    const expectedPath = isWindows
+      ? 'C:\\Users\\YourName\\your-project\\data\\config.ts'
+      : '/Users/YourName/your-project/data/config.ts';
+
     vi.stubGlobal('process', {
-      cwd: vi.fn(() => '/Users/YourName/your-project'),
+      cwd: vi.fn(() => cwd),
+    });
+
+    const filePath = path.join(process.cwd(), 'data/config.ts');
+    expect(filePath).toBe(expectedPath);
+  });
+
+  // Test with absolute-like paths
+  it('should correctly join the current working directory and the absolute path (/data/config.ts)', () => {
+    const cwd = isWindows
+      ? 'C:\\Users\\YourName\\your-project'
+      : '/Users/YourName/your-project';
+    const expectedPath = isWindows
+      ? 'C:\\Users\\YourName\\your-project\\data\\config.ts'
+      : '/Users/YourName/your-project/data/config.ts';
+
+    vi.stubGlobal('process', {
+      cwd: vi.fn(() => cwd),
     });
 
     const filePath = path.join(process.cwd(), '/data/config.ts');
-
-    // Check that the path is correctly joined
-    expect(filePath).toBe('/Users/YourName/your-project/data/config.ts');
+    expect(filePath).toBe(expectedPath);
   });
 });
