@@ -2,6 +2,12 @@
   "name": "nuecms-wizard",
   "version": "1.0.0",
   "type": "module",
+  "author": "Terry Cai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuecms/nuecms-wizard.git"
+  },
   "scripts": {
     "dev": "nodemon -w server -x tsx server/index.ts",
     "build": "tsup && vite build",
