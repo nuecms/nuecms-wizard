@@ -1,0 +1,77 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # Triggers on version tags like v1.0.0
+
+jobs:
+  build:
+    name: Build and Zip
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up pnpm and cache dependencies
+      - name: Set up pnpm and cache dependencies
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9' # Specify the version of pnpm
+
+      # Install dependencies and build the project
+      - name: Install and Build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      # Zip the dist folder and rename to wizard.zip
+      - name: Zip and Rename Build Artifacts
+        run: |
+          zip -r wizard.zip ./dist # Ensure dist is the output folder
+
+      # Upload the wizard.zip file as an artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: wizard-artifact
+          path: wizard.zip
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Download the wizard.zip artifact
+      - name: Download Wizard Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: wizard-artifact
+
+      # Create a GitHub release and upload the wizard.zip file
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            Automated release for ${{ github.ref_name }}.
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: wizard.zip
+          asset_name: wizard.zip
+          asset_content_type: application/zip

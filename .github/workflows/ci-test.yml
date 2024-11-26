@@ -1,0 +1,51 @@
+name: CI - Test
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+  pull_request:
+    branches:
+      - main  # Trigger on pull request targeting main branch
+
+jobs:
+  install-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]  # Define the operating systems to run on
+
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'  # Specify the Node.js version you want to use
+
+    # Install pnpm
+    - name: Install pnpm
+      run: |
+        if [ $RUNNER_OS == 'Windows' ]; then
+          npm install -g pnpm
+        else
+          npm install -g pnpm
+        fi
+
+    # Install dependencies using pnpm
+    - name: Install dependencies
+      run: pnpm install
+
+    # Run tests (adjust to your test framework, e.g., Jest, Mocha, etc.)
+    - name: Run tests
+      run: pnpm test  # Replace with your test command if necessary
+
+    # Optional: Upload test results (if using a test reporter)
+    # - name: Upload test results
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: test-results
+    #     path: path-to-test-results
