@@ -41,7 +41,7 @@
   </transition>
 </template>
 
-<script setup>
+<script setup lang="ts" name="Notification">
 import { CheckCircleIcon, XCircleIcon, InfoIcon } from 'lucide-vue-next'
 
 // Props

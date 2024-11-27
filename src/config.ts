@@ -11,6 +11,11 @@ export const defaultConfig = {
     host: "127.0.0.1",
     port: '6379',
     password: "",
+  },
+  admin: { // Administrator account
+    username: "admin",
+    password: "admin123",
+    password2: "admin123",
   }
 };
 
@@ -38,12 +43,27 @@ export const stepsConfig = [
     ]
   },
   {
-    title: 'wizard.redisConfig',
-    key: 'redis', // Key for Redis step
-    fields: [
-      { name: 'host', label: 'wizard.host', type: 'text', placeholder: 'localhost', required: true },
-      { name: 'port', label: 'wizard.port', type: 'number', placeholder: '6379', required: true },
-      { name: 'password', label: 'wizard.password', type: 'password', placeholder: 'wizard.password', required: false },
+    title: '',
+    children: [
+      {
+        title: 'wizard.redisConfig',
+        key: 'redis', // Key for Redis step
+        fields: [
+          { name: 'host', label: 'wizard.host', type: 'text', placeholder: 'localhost', required: true },
+          { name: 'port', label: 'wizard.port', type: 'number', placeholder: '6379', required: true },
+          { name: 'password', label: 'wizard.password', type: 'password', placeholder: 'wizard.password', required: false },
+        ]
+      },
+      {
+        // administator account
+        title: 'wizard.adminAccount',
+        key: 'admin',
+        fields: [
+          { name: 'username', label: 'wizard.adminAccount', type: 'text', placeholder: 'wizard.adminAccount', required: true },
+          { name: 'password', label: 'wizard.adminPassword', type: 'password', placeholder: 'wizard.adminPassword', required: true },
+          { name: 'password2', label: 'wizard.confirmPassword', type: 'password', placeholder: 'wizard.confirmPassword', required: true }
+        ]
+      }
     ]
   }
 ]
@@ -75,6 +95,9 @@ export const messages = {
       password: 'Password',
       database: 'Database Name',
       prefix: 'Table Prefix',
+      adminAccount: 'Admin Account',
+      adminPassword: 'Admin Password',
+      confirmPassword: 'Confirm Password',
       prev: 'Previous',
       next: 'Next',
       finish: 'Finish',
@@ -194,6 +217,9 @@ export const messages = {
       password: '密码',
       database: '数据库名',
       prefix: '表前缀',
+      adminAccount: '管理员账号',
+      adminPassword: '管理员密码',
+      confirmPassword: '确认密码',
       prev: '上一步',
       next: '下一步',
       finish: '完成',

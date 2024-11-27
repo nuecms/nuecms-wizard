@@ -1,18 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+  <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
     <Notification v-bind="notifyData" />
     <div class="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
       <div class="p-8">
         <!-- Layout with Setup Guide on the Top Side -->
         <div class="mb-8">
-          <div class="flex justify-between">
+          <div class="flex justify-between items-center">
+            <!-- Setup Guide Header -->
             <div class="text-lg font-semibold text-gray-700">Setup Guide</div>
+
+            <!-- Steps Navigation -->
             <div class="flex space-x-4">
-              <div :class="currentStep === 0 ? 'text-blue-600' : ''">{{ t('wizard.step1') }}</div>
-              <div :class="currentStep === 1 ? 'text-blue-600' : ''">{{ t('wizard.step2') }}</div>
-              <div :class="currentStep === 2 ? 'text-blue-600' : ''">{{ t('wizard.step3') }}</div>
-              <div :class="currentStep === 3 ? 'text-blue-600' : ''">{{ t('wizard.step4') }}</div>
-              <div :class="currentStep === 4 ? 'text-blue-600' : ''">{{ t('wizard.finish') }}</div>
+              <div v-for="(step, index) in stepTexts" :key="index" :class="{ 'text-blue-600': currentStep === index }"
+                class="cursor-pointer" aria-current="step">
+                {{ t(step) }}
+              </div>
             </div>
           </div>
         </div>
@@ -38,66 +40,70 @@
         </div>
 
         <div v-if="currentStep < steps.length">
-          <h2 class="text-xl font-semibold mb-4 text-gray-700">{{ t(steps[currentStep].title) }}</h2>
+
           <form @submit="nextStep">
             <!-- License Step -->
-            <div v-if="currentStep === 0" class="rounded-md">
-              <div class="bg-gray-100 p-4 rounded-md text-sm max-h-80 overflow-y-auto mb-4">
-                <div class="">
-                  <!-- License agreement content -->
-                  <p class="text-gray-700">{{ t('license.intro') }}</p>
+            <StepSection v-if="currentStep === 0" :title="t(steps[currentStep].title)">
+              <div class="rounded-md">
+                <div class="bg-gray-100 p-4 rounded-md text-sm max-h-80 overflow-y-auto mb-4">
+                  <div class="">
+                    <!-- License agreement content -->
+                    <p class="text-gray-700">{{ t('license.intro') }}</p>
 
-                  <ul v-for="(section, index) in sections" :key="index" class="list-disc pl-5 mt-2">
-                    <li>
-                      <h3 class="text-lg font-semibold text-gray-800">{{ section.title }}</h3>
-                      <p class="text-gray-700">{{ section.content }}</p>
-                    </li>
-                  </ul>
+                    <ul v-for="(section, index) in sections" :key="index" class="list-disc pl-5 mt-2">
+                      <li>
+                        <h3 class="text-lg font-semibold text-gray-800">{{ section.title }}</h3>
+                        <p class="text-gray-700">{{ section.content }}</p>
+                      </li>
+                    </ul>
 
-                  <p class="text-gray-700 mt-4">{{ t('license.notice') }}</p>
+                    <p class="text-gray-700 mt-4">{{ t('license.notice') }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center mt-4">
+                  <input type="checkbox" v-model="isLicenseAccepted" id="accept-license" class="mr-2" />
+                  <label for="accept-license" class="text-sm text-gray-700">
+                    {{ t('wizard.acceptLicense') }}
+                  </label>
                 </div>
               </div>
-              <div class="flex items-center mt-4">
-                <input type="checkbox" v-model="isLicenseAccepted" id="accept-license" class="mr-2" />
-                <label for="accept-license" class="text-sm text-gray-700">
-                  {{ t('wizard.acceptLicense') }}
-                </label>
-              </div>
-            </div>
-            <div v-else-if="currentStep === 1">
-                <!-- System Overview -->
-                <div class="bg-gray-100 p-4 rounded-md text-sm overflow-auto mb-4">
-                  <div v-for="(section, sectionName) in systemOverview" :key="sectionName" class="mb-4">
-                    <h3 class="font-semibold text-lg mb-2">{{ t(`wizard.${sectionName}`) }}</h3>
-                    <div v-for="(value, key) in section" :key="key" class="flex justify-between py-1">
-                      <span class="text-gray-600">{{ t(`wizard.${key}`) }}</span>
-                      <span class="font-medium">
-                        <!-- if value type is boolean use icon to render, else show value -->
-                        <template v-if="typeof value === 'boolean'">
-                          <span v-if="value" class="text-green-500">✔</span>
-                          <span v-else class="text-red-500">✘</span>
-                        </template>
-                        <template v-else>
-                          {{ value }}
-                        </template>
-                      </span>
-                    </div>
+            </StepSection>
+
+            <StepSection v-else-if="currentStep === 1" :title="t(steps[currentStep].title)">
+              <!-- System Overview -->
+              <div class="bg-gray-100 p-4 rounded-md text-sm overflow-auto mb-4">
+                <div v-for="(section, sectionName) in systemOverview" :key="sectionName" class="mb-4">
+                  <h3 class="font-semibold text-lg mb-2">{{ t(`wizard.${sectionName}`) }}</h3>
+                  <div v-for="(value, key) in section" :key="key" class="flex justify-between py-1">
+                    <span class="text-gray-600">{{ t(`wizard.${key}`) }}</span>
+                    <span class="font-medium">
+                      <!-- if value type is boolean use icon to render, else show value -->
+                      <template v-if="typeof value === 'boolean'">
+                        <span v-if="value" class="text-green-500">✔</span>
+                        <span v-else class="text-red-500">✘</span>
+                      </template>
+                      <template v-else>
+                        {{ value }}
+                      </template>
+                    </span>
                   </div>
                 </div>
               </div>
-            <div v-else>
+            </StepSection>
+            <StepSection v-else :data="steps[currentStep]" :title="t(steps[currentStep].title)" >
               <!-- Configuration Step -->
-              <div v-for="field in steps[currentStep].fields" :key="field.name" class="mb-4">
-                <label :for="field.name" class="block text-sm font-medium text-gray-700 mb-1">
-                  {{ t(field.label) }}
-                </label>
-                <input :id="field.name" v-model="config[steps[currentStep].key][field.name]" :type="field.type"
-                  :placeholder="t(field.placeholder)"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  :required="field.required" />
-              </div>
-            </div>
-
+              <template #fields="{ fields, stepKey }">
+                <div v-for="field in fields" :key="field.name" class="mb-4 flex items-center">
+                  <label :for="field.name" class="block text-sm font-medium text-gray-700 mb-1 w-1/4 text-left pr-4">
+                    {{ t(field.label) }}
+                  </label>
+                  <input :id="field.name" v-model="config[stepKey][field.name]" :type="field.type"
+                    :placeholder="t(field.placeholder)"
+                    class="w-3/4 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    :required="field.required" />
+                </div>
+              </template>
+            </StepSection>
             <div class="flex justify-between mt-6">
               <button v-if="currentStep > 0" @click="prevStep" type="button"
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
@@ -107,14 +113,10 @@
                   class="px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-300">
                   {{  t('wizard.next') }}
               </button> -->
-              <button
-                v-if="currentStep === 0"
-                :class="{
-                  'px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500': true,
-                  'bg-gray-300 opacity-50': !isLicenseAccepted
-                }"
-                type="submit"
-              >
+              <button v-if="currentStep === 0" :class="{
+                'px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500': true,
+                'bg-gray-300 opacity-50': !isLicenseAccepted
+              }" type="submit">
                 {{ t('wizard.next') }}
               </button>
               <button v-else type="submit"
@@ -141,7 +143,7 @@
               class="bg-gray-100 p-4 rounded-md text-left overflow-auto text-sm">{{ JSON.stringify(config, null, 2) }}</pre>
 
             <div class="flex justify-center mt-6">
-              <button  @click="prevStep" type="button"
+              <button @click="prevStep" type="button"
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
                 {{ t('wizard.prev') }}
               </button>
@@ -159,8 +161,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CheckCircleIcon, XCircleIcon } from 'lucide-vue-next'
 import Notification from './Notification.vue'
+import StepSection from './StepSection.vue'
 import { languageLabels, defaultConfig, stepsConfig } from '../config'
 import { postData, getData } from '../utils/request'
+import { Step, Config } from '../types'
 const { t, messages, locale, availableLocales } = useI18n()
 
 // Reactive state for license acceptance
@@ -170,34 +174,6 @@ const sections = computed(() => {
   // localized sections
   return messages.value[locale.value].license.sections
 })
-interface Field {
-  name: string;
-  label: string;
-  type: string;
-  placeholder: string;
-  required?: boolean;
-}
-
-interface Step {
-  title: string;
-  key: string; // Added key to reference the step's configuration
-  fields: Field[];
-}
-
-interface Config {
-  mysql: {
-    host: string;
-    port: string;
-    username: string;
-    password: string;
-    database: string;
-  };
-  redis: {
-    host: string;
-    port: string;
-    password: string;
-  };
-}
 
 const logo = ref<string>('')
 const currentStep = ref<number>(0)
@@ -208,6 +184,14 @@ const completionMessage = ref<string>('')
 const successState = ref<number>(0)
 const currentLanguage = ref(locale.value)
 const systemOverview = ref({})
+
+const stepTexts = [
+  'wizard.step1',
+  'wizard.step2',
+  'wizard.step3',
+  'wizard.step4',
+  'wizard.finish',
+]
 
 const steps: Step[] = stepsConfig
 

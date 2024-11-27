@@ -15,6 +15,12 @@ export interface RedisConfig {
   password?: string;
 }
 
+export interface AdminConfig {
+  username: string;
+  password: string;
+  password2: string;
+}
+
 export interface UploadConfig {
   storagePath: string;
   maxSize: number;
@@ -43,8 +49,9 @@ export interface SecurityConfig {
 
 
 export interface Configs {
-  mysql: Config;
+  mysql: MysqlConfig;
   redis: RedisConfig;
+  admin: AdminConfig;
   upload: UploadConfig;
   cookie: CookieConfig;
   password: PasswordConfig;
