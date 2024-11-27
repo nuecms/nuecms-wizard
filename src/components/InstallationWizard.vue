@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <Notification v-bind="notifyData" />
     <div class="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
       <div class="p-8">
         <!-- Layout with Setup Guide on the Top Side -->
@@ -38,7 +39,7 @@
 
         <div v-if="currentStep < steps.length">
           <h2 class="text-xl font-semibold mb-4 text-gray-700">{{ t(steps[currentStep].title) }}</h2>
-          <form @submit.prevent="nextStep">
+          <form @submit="nextStep">
             <!-- License Step -->
             <div v-if="currentStep === 0" class="rounded-md">
               <div class="bg-gray-100 p-4 rounded-md text-sm max-h-80 overflow-y-auto mb-4">
@@ -102,10 +103,20 @@
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
                 {{ t('wizard.prev') }}
               </button>
-              <button v-if="currentStep === 0" type="submit" :disabled="!isLicenseAccepted"
+              <!-- <button v-if="currentStep === 0"   :disabled="!isLicenseAccepted" @click="nextStep" type="button"
                   class="px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-300">
                   {{  t('wizard.next') }}
-                </button>
+              </button> -->
+              <button
+                v-if="currentStep === 0"
+                :class="{
+                  'px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500': true,
+                  'bg-gray-300 opacity-50': !isLicenseAccepted
+                }"
+                type="submit"
+              >
+                {{ t('wizard.next') }}
+              </button>
               <button v-else type="submit"
                 class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 {{ currentStep === steps.length - 1 ? t('wizard.finish') : t('wizard.next') }}
@@ -147,6 +158,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CheckCircleIcon, XCircleIcon } from 'lucide-vue-next'
+import Notification from './Notification.vue'
 import { languageLabels, defaultConfig, stepsConfig } from '../config'
 import { postData, getData } from '../utils/request'
 const { t, messages, locale, availableLocales } = useI18n()
@@ -199,6 +211,12 @@ const systemOverview = ref({})
 
 const steps: Step[] = stepsConfig
 
+const notifyData = reactive({
+  message: '',
+  type: 'info',
+  duration: 3000,
+})
+
 
 // fetch system overview data
 const fetchSystemOverview = async () => {
@@ -211,16 +229,27 @@ const fetchSystemOverview = async () => {
 }
 
 onMounted(() => {
+  notify('Welcome to the installation wizard', 'info')
   fetchSystemOverview()
 })
 
+const notify = (message: string, type: string = 'info') => {
+  notifyData.message = message
+  notifyData.type = type
+  setTimeout(() => {
+    notifyData.message = ''
+  }, notifyData.duration)
+}
+
 
 // Modify config dynamically in nextStep
-const nextStep = async () => {
+const nextStep = async (event: Event) => {
+  event.preventDefault()
+  console.log('nextStep')
   if (currentStep.value === 0) {
     // License step - check if the user accepted the license
     if (!isLicenseAccepted.value) {
-      alert(t('wizard.licenseError')) // Handle license acceptance error
+      notify(t('wizard.licenseError'), 'error') // Handle license acceptance error
       return
     }
   }

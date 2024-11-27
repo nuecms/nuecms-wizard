@@ -1,11 +1,14 @@
 import mysql from 'mysql2/promise';
 import fs from 'fs/promises';
-import { Config } from '../types';
+import path from 'path';
+import { MysqlConfig } from '../types';
+import wizardConfig from '../../wizard.config';
+import { Importer } from '../utils/mysql-import';
 
 /**
  * Connects to the MySQL server.
  */
-export const connect = (config: Config) => {
+export const connect = (config: MysqlConfig) => {
   const { host, port, username, password } = config;
   return mysql.createConnection({ host, port: Number(port), user: username, password });
 }
@@ -43,7 +46,7 @@ export async function checkDatabase(config) {
 /**
  * Validates the database connection and prepares the database.
  */
-export async function validateDatabase(config: Config) {
+export async function validateDatabase(config: MysqlConfig) {
   let connection: mysql.Connection;
   const { database: name, prefix } = config;
   try {
@@ -85,29 +88,22 @@ export async function validateDatabase(config: Config) {
 /**
  * Imports SQL data from a file into the database.
  */
-export async function importSQLData(config: Config, sqlFilePath) {
-  let connection;
+export async function importSQLData(config: MysqlConfig) {
+  const sqlFilePath = wizardConfig.sqlfile;
   try {
-    // Read the SQL file
-    const sqlContent = await fs.readFile(sqlFilePath, 'utf8');
 
-    // Connect to the database
-    connection = await connect(config);
-    console.log('Connected to the database.');
-
-    // Execute SQL queries from the file
-    const queries = sqlContent.split(';').filter((query) => query.trim());
-    for (const query of queries) {
-      await connection.query(query.trim());
-    }
-    console.log('SQL data imported successfully.');
-    return { success: true };
+    const importer = new Importer({ host: config.host, user: config.username, password: config.password, database: config.database });
+    importer.onProgress((progress) => {
+      const percent = Math.floor(progress.bytes_processed / progress.total_bytes * 10000) / 100;
+      console.log(`${percent}% Completed`);
+    })
+    importer.import(path.join(process.cwd(), sqlFilePath)).then(() => {
+      console.log('SQL data imported successfully.');
+    }).catch((err) => {
+      throw err;
+    })
   } catch (err) {
     console.error('Error importing SQL data:', err.message);
-    return { success: false, error: err.message };
   } finally {
-    if (connection) {
-      await connection.end();
-    }
   }
 }

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { Configs } from '../types';
 import { saveConfigToJson, replaceConfigVariables } from '../services/configService';
-import { checkDatabase } from '../services/mysql';
+import { checkDatabase, importSQLData } from '../services/mysql';
 import { checkRedisConnection } from '../services/redis';
-import { systemOverview } from '../services/systemService';
+import { isInstallLocked, lockInstall, systemOverview } from '../services/systemService';
 import { makeSalt } from '../utils/salt-gen';
 
 export async function saveConfig(req: Request, res: Response) {
@@ -28,6 +28,9 @@ export async function saveConfig(req: Request, res: Response) {
     await checkRedisConnection(configs.redis);
     await saveConfigToJson(configs);
     await replaceConfigVariables(configs);
+    await importSQLData(configs.mysql);
+    // lockInstall
+    await lockInstall();
     res.success({ msg: 'Configuration saved, connections tested, and database initialized successfully' });
   } catch (error) {
     res.fail({ msg: error instanceof Error ? error.message : 'An unknown error occurred' });
@@ -46,3 +49,16 @@ export async function getSystemOverview(req: Request, res: Response) {
   }
 }
 
+
+export async function getStatus(req: Request, res: Response) {
+  try {
+    const locked = await isInstallLocked();
+    res.success({
+      data: {
+        locked
+      }
+    });
+  } catch (error) {
+    res.fail({ msg: error instanceof Error ? error.message : 'An unknown error occurred' });
+  }
+}

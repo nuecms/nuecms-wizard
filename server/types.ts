@@ -1,4 +1,4 @@
-export interface Config {
+export interface MysqlConfig {
   server?: string;
   host: string;
   port: number | string;

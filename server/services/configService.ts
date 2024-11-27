@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Config, Configs } from '../types';
+import { Configs } from '../types';
 import wizardConfig from '../../wizard.config';
 
 export async function saveConfigToJson(configs: Configs): Promise<void> {

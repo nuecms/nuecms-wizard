@@ -12,4 +12,7 @@ export default {
   configfile: '/data/config.json',
   // lockfile
   lockfile: '/data/install.lock',
+
+  // sql files
+  sqlfile: '/data/install.sql',
 }
