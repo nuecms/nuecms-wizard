@@ -17,15 +17,15 @@
   },
   "dependencies": {
     "express": "^4.21.1",
-    "lucide-vue-next": "^0.460.0",
+    "lucide-vue-next": "^0.461.0",
     "mysql2": "^3.11.4",
     "vue": "^3.5.13",
     "vue-i18n": "^10.0.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/node": "^22.9.3",
-    "@vitejs/plugin-vue": "^5.2.0",
+    "@types/node": "^22.10.0",
+    "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.20",
     "nodemon": "^3.1.7",
     "postcss": "^8.4.49",
@@ -34,7 +34,7 @@
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11",
-    "vitest": "^2.1.5"
+    "vite": "^6.0.1",
+    "vitest": "^2.1.6"
   }
 }
