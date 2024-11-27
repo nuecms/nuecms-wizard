@@ -7,21 +7,56 @@ export async function saveConfigToJson(configs: Configs): Promise<void> {
   await fs.writeFile(path.join(process.cwd(), wizardConfig.configfile), JSON.stringify(configs, null, 2));
 }
 
-export async function replaceConfigVariables(configs: Configs): Promise<void> {
-  Object.entries(wizardConfig.varfile).forEach(async ([file, outFile]) => {
-    let content = await fs.readFile(path.join(process.cwd(), file), 'utf-8');
-    // Replace MySQL variables
-    content = content.replace(/MYSQL_HOST\s*=\s*['"].*?['"]/, `MYSQL_HOST = "${configs.mysql.host}"`);
-    content = content.replace(/MYSQL_PORT\s*=\s*\d+/, `MYSQL_PORT = ${configs.mysql.port}`);
-    content = content.replace(/MYSQL_USER\s*=\s*['"].*?['"]/, `MYSQL_USER = "${configs.mysql.username}"`);
-    content = content.replace(/MYSQL_PASSWORD\s*=\s*['"].*?['"]/, `MYSQL_PASSWORD = "${configs.mysql.password}"`);
-    content = content.replace(/MYSQL_DATABASE\s*=\s*['"].*?['"]/, `MYSQL_DATABASE = "${configs.mysql.database}"`);
 
-    // Replace Redis variables
-    content = content.replace(/REDIS_HOST\s*=\s*['"].*?['"]/, `REDIS_HOST = "${configs.redis.host}"`);
-    content = content.replace(/REDIS_PORT\s*=\s*\d+/, `REDIS_PORT = ${configs.redis.port}`);
-    content = content.replace(/REDIS_PASSWORD\s*=\s*['"].*?['"]/, `REDIS_PASSWORD = "${configs.redis.password}"`);
-    await fs.writeFile(path.join(process.cwd(), outFile), content);
-  })
+/**
+ * Flattens a nested configuration object into a single-level object
+ * with dot-separated keys.
+ */
+function flattenObject(obj: Record<string, any>, parentKey = '', sep = '.'): Record<string, any> {
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    const newKey = parentKey ? `${parentKey}${sep}${key}` : key;
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      Object.assign(acc, flattenObject(value, newKey, sep));
+    } else {
+      acc[newKey] = value;
+    }
+    return acc;
+  }, {} as Record<string, any>);
 }
 
+export async function replaceConfigVariables(configs: Configs): Promise<void> {
+  try {
+    const flatConfigs = flattenObject(configs);
+
+    for (const [file, outFile] of Object.entries(wizardConfig.varfile)) {
+      const filePath = path.join(process.cwd(), file);
+      let content = await fs.readFile(filePath, 'utf-8');
+
+      // Replace placeholders
+      for (const [key, value] of Object.entries(flatConfigs)) {
+        let replacement;
+
+        if (Array.isArray(value)) {
+          // Format arrays as JavaScript arrays
+          replacement = `[${value.map((v) => (typeof v === 'string' ? `'${v}'` : v)).join(', ')}]`;
+        } else if (typeof value === 'string') {
+          // Add quotes around strings to maintain valid JavaScript
+          replacement = `'${value}'`;
+        } else {
+          // Use the value directly for numbers, booleans, etc.
+          replacement = value;
+        }
+
+        // Replace placeholders in the content
+        const regex = new RegExp(`\\{${key}\\}`, 'g');
+        content = content.replace(regex, replacement);
+      }
+
+      const outFilePath = path.join(process.cwd(), outFile);
+      await fs.writeFile(outFilePath, content);
+      console.log(`Variables replaced and saved to ${outFilePath}`);
+    }
+  } catch (error) {
+    console.error('Error replacing config variables:', error);
+  }
+}
