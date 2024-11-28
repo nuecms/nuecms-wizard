@@ -5,20 +5,17 @@
       <div class="p-8">
         <!-- Layout with Setup Guide on the Top Side -->
         <div class="mb-8">
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-start">
             <!-- Setup Guide Header -->
-            <div class="text-lg font-semibold text-gray-700">Setup Guide</div>
-
+            <div class="min-w-[120px] text-lg mt-3 font-semibold text-gray-700">Setup Guide</div>
             <!-- Steps Navigation -->
-            <div class="flex space-x-4">
-              <div v-for="(step, index) in stepTexts" :key="index" :class="{ 'text-blue-600': currentStep === index }"
-                class="cursor-pointer" aria-current="step">
-                {{ t(step) }}
+            <div class="flex-1 flex justify-end">
+              <div class="ml-4 w-auto">
+                <StepIndicator :current-step="currentStep" :steps="stepTexts" />
               </div>
             </div>
           </div>
         </div>
-
         <div class="flex justify-center mb-8">
           <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
             <img v-if="logo" :src="logo" alt="Logo" class="max-w-full max-h-full p-4" />
@@ -90,7 +87,7 @@
                 </div>
               </div>
             </StepSection>
-            <StepSection v-else :data="steps[currentStep]" :title="t(steps[currentStep].title)" >
+            <StepSection v-else :data="steps[currentStep]" :title="t(steps[currentStep].title)">
               <!-- Configuration Step -->
               <template #fields="{ fields, stepKey }">
                 <div v-for="field in fields" :key="field.name" class="mb-4 flex items-center">
@@ -162,6 +159,7 @@ import { useI18n } from 'vue-i18n'
 import { CheckCircleIcon, XCircleIcon } from 'lucide-vue-next'
 import Notification from './Notification.vue'
 import StepSection from './StepSection.vue'
+import StepIndicator from './StepIndicator.vue'
 import { languageLabels, defaultConfig, stepsConfig } from '../config'
 import { postData, getData } from '../utils/request'
 import { Step, Config } from '../types'
@@ -186,12 +184,13 @@ const currentLanguage = ref(locale.value)
 const systemOverview = ref({})
 
 const stepTexts = [
-  'wizard.step1',
-  'wizard.step2',
-  'wizard.step3',
-  'wizard.step4',
-  'wizard.finish',
+  t('wizard.step1'),
+  t('wizard.step2'),
+  t('wizard.step3'),
+  t('wizard.step4'),
+  t('wizard.finish'),
 ]
+
 
 const steps: Step[] = stepsConfig
 
