@@ -8,6 +8,6 @@
     "publish": false
   },
   "hook": {
-    "after:version:release": "bash ./scripts/update-github-tag.sh"
+    "before:release": "bash ./scripts/update-github-tag.sh"
   }
 }
