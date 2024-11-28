@@ -16,8 +16,8 @@
     >
       <div class="flex items-center" :class="[direction === 'vertical' ? 'flex-1' : '']">
         <div
-          class="flex min-w-[45px] whitespace-nowrap relative z-10"
-          :class="[direction === 'vertical' ? 'flex-row items-center' : 'flex-col']"
+          class="flex min-w-[50px] items-center whitespace-nowrap relative z-10"
+          :class="[direction === 'vertical' ? 'flex-row' : 'flex-col']"
         >
           <!-- Default Number Circle -->
           <div
