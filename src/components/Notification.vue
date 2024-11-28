@@ -7,7 +7,7 @@
   >
     <div
       v-show="isVisible"
-      :class="['fixed top-4 left-1/2 transform -translate-x-1/2 mb-4 p-4 rounded-lg shadow-lg', notificationClasses]"
+      :class="['fixed z-50 top-4 left-1/2 transform -translate-x-1/2 mb-4 p-4 rounded-lg shadow-lg', notificationClasses]"
       role="alert"
       :style="{ maxWidth: '90%' }"
     >

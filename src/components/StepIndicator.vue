@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex w-full mb-8"
+    class="flex w-full mb-8 relative"
     :class="[
       direction === 'horizontal' ? 'flex-row' : 'flex-col space-y-4'
     ]"
@@ -16,8 +16,8 @@
     >
       <div class="flex items-center" :class="[direction === 'vertical' ? 'flex-1' : '']">
         <div
-          class="flex min-w-[50px] whitespace-nowrap"
-          :class="[direction === 'vertical' ? 'flex-row' : 'flex-col']"
+          class="flex min-w-[45px] whitespace-nowrap relative z-10"
+          :class="[direction === 'vertical' ? 'flex-row items-center' : 'flex-col']"
         >
           <!-- Default Number Circle -->
           <div
@@ -26,7 +26,7 @@
               currentStep === index
                 ? 'bg-blue-500 text-white'
                 : currentStep > index
-                ? 'bg-green-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-500'
             ]"
             :aria-current="currentStep === index ? 'step' : undefined"
@@ -64,14 +64,16 @@
 
         <!-- Connector Line -->
         <div
-          v-if="index < steps.length - 1"
-          :class="[
-            direction === 'horizontal' ? 'flex-1 h-0.5 mx-4' : 'w-0.5 h-full ml-5 mt-2',
-            currentStep > index ? 'bg-blue-500' : 'bg-gray-200',
-            direction === 'vertical' ? 'absolute top-10 bottom-0' : ''
-          ]"
-          aria-hidden="true"
-        ></div>
+            v-if="index < steps.length - 1"
+            :class="[
+              'absolute',
+              direction === 'horizontal'
+                ? 'h-0.5 top-5 left-[calc(100%+16px)] right-0'
+                : 'w-0.5 top-10 bottom-[0px] left-5',
+              currentStep > index ? 'bg-green-500' : 'bg-gray-200'
+            ]"
+            aria-hidden="true"
+          ></div>
       </div>
     </div>
   </div>
