@@ -194,6 +194,12 @@ const stepTexts = computed(() => {
 const steps: Step[] = stepsConfig
 
 
+onMounted(() => {
+  notify({
+    message: 'Welcome to the installation wizard',
+  })
+})
+
 // fetch system overview data
 const fetchSystemOverview = async () => {
   try {
@@ -204,64 +210,58 @@ const fetchSystemOverview = async () => {
   }
 }
 
-onMounted(() => {
-  notify({
-    message: 'Welcome to the installation wizard',
-  })
-  fetchSystemOverview()
-})
+// Handle the next step
+const gotoSystemOverview = async () => {
+  await fetchSystemOverview()
+  currentStep.value++
+}
 
-
-
-// Modify config dynamically in nextStep
-const nextStep = async (event: Event) => {
-  event.preventDefault()
-  if (currentStep.value === 0) {
-    // License step - check if the user accepted the license
-    if (!isLicenseAccepted.value) {
-      notify({
-        message: t('wizard.licenseError'),
-        type: 'error'
-      }) // Handle license acceptance error
-      return
-    } else {
-      // check /data/install.lock file
-      try {
-        const res = await getData('/api/status')
-        if (res.success && res.data.locked) {
-          if (wizardConfig.canIgnoreLock) {
-            currentStep.value++
-          } else {
-            confirm({
-              title: t('wizard.installLocked'),
-              message: t('wizard.installLockedMessage'),
-              confirmText: t('wizard.installLockedConfirm'),
-              cancelText: t('wizard.installLockedCancel'),
-              type: 'info'
-            }).then((value) => {
-              if (value) {
-                currentStep.value++
-              }
-            })
-          }
-          return
-        } else {
-          currentStep.value++
-        }
-      } catch (error: Error | any) {
-        notify({
-          message: t('wizard.error', { msg: error.message }),
-          type: 'error'
-        })
-        return
-      }
-    }
+// Handle license acceptance
+const handleLicenseNext = async () => {
+  // License step - check if the user accepted the license
+  if (!isLicenseAccepted.value) {
+    notify({
+      message: t('wizard.licenseError'),
+      type: 'error'
+    }) // Handle license acceptance error
     return
-  }
-  if (currentStep.value < steps.length - 1) {
-    currentStep.value++
   } else {
+    // check /data/install.lock file
     try {
+      const res = await getData('/api/status')
+      if (res.success && res.data.locked) {
+        if (wizardConfig.canIgnoreLock) {
+          gotoSystemOverview()
+        } else {
+          confirm({
+            title: t('wizard.installLocked'),
+            message: t('wizard.installLockedMessage'),
+            confirmText: t('wizard.installLockedConfirm'),
+            cancelText: t('wizard.installLockedCancel'),
+            type: 'info'
+          }).then((value) => {
+            if (value) {
+              gotoSystemOverview()
+            }
+          })
+        }
+        return
+      } else {
+        gotoSystemOverview()
+      }
+    } catch (error: Error | any) {
+      notify({
+        message: t('wizard.error', { msg: error.message }),
+        type: 'error'
+      })
+      return
+    }
+  }
+}
+
+// Submit form data
+const submitForm = async (event: Event) => {
+  try {
       const data = await postData('/api/save-config', config)
       successState.value = data.success ? 1 : 0
       currentStep.value++
@@ -277,6 +277,19 @@ const nextStep = async (event: Event) => {
         completionMessage.value = t('wizard.error', { msg: 'Unknown error' })
       }
     }
+}
+
+// Modify config dynamically in nextStep
+const nextStep = async (event: Event) => {
+  event.preventDefault()
+  if (currentStep.value === 0) {
+    await handleLicenseNext()
+    return
+  }
+  if (currentStep.value < steps.length - 1) {
+    currentStep.value++
+  } else {
+    await submitForm(event)
   }
 }
 
