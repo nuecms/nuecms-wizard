@@ -23,8 +23,7 @@ export default defineConfig({
       // Ignore specific file or directory (supports glob patterns)
       ignored: [
         'node_modules/**',
-        'config.json',
-        'src/config.ts'
+        'data/**'
       ]
     }
   },
