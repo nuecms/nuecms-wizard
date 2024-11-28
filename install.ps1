@@ -1,5 +1,5 @@
 # Ensure GITHUB_TAG is set (or use default version)
-$VERSION="v1.0.4"
+$VERSION="v1.0.5"
 
 # Define the GitHub release URL (adjust with your repo details)
 $GITHUB_REPO = "nuecms/nuecms-wizard"
