@@ -1,6 +1,7 @@
 import os from "os";
 import fs from "fs";
 import path from "path";
+import { exec } from "child_process";
 import wizardConfig from "../../wizard.config";
 
 // Function to check if a directory is writable
@@ -12,6 +13,35 @@ function isDirectoryWritable(directoryPath) {
     return false; // Directory is not writable
   }
 }
+
+
+export const openUrl = (url: string) => {
+  let command;
+  // Check the operating system and choose the appropriate command
+  if (process.platform === 'win32') {
+    command = `start ${url}`;
+  } else if (process.platform === 'darwin') {
+    command = `open ${url}`;
+  } else if (process.platform === 'linux') {
+    command = `xdg-open ${url}`;
+  }
+  try {
+    // Execute the command
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error opening URL: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`URL opened successfully: ${stdout}`);
+    });
+  } catch (error) {
+    throw error;
+  }
+};
 
 // Build system overview object
 export async function systemOverview() {
