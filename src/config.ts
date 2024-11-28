@@ -87,7 +87,7 @@ export const messages = {
       installLockedMessage: 'The installation has already been completed. Are you sure you want to run the configuration wizard again?',
       installLockedConfirm: 'OK',
       installLockedCancel: 'Cancel',
-      title: 'ConfigWizard',
+      title: 'NueCMS Wizard',
       language: 'Language',
       licenseSetup: 'License Setup',
       systemOverview: 'System Overview',

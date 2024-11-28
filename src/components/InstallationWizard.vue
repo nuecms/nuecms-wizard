@@ -160,6 +160,7 @@ import { confirm } from '@/utils/confirm'
 import { notify } from '@/utils/notify'
 import { Step, Config } from '@/types'
 import wizardConfig from '../../wizard.config'
+import logoImg from '@/assets/icon.svg'
 const { t, messages, locale, availableLocales } = useI18n()
 
 // Reactive state for license acceptance
@@ -170,7 +171,7 @@ const sections = computed(() => {
   return messages.value[locale.value].license.sections
 })
 
-const logo = ref<string>('')
+const logo = ref<string>(logoImg)
 const currentStep = ref<number>(0)
 const config = reactive<Config>({
   ...defaultConfig
@@ -180,14 +181,15 @@ const successState = ref<number>(0)
 const currentLanguage = ref(locale.value)
 const systemOverview = ref({})
 
-const stepTexts = [
-  t('wizard.step1'),
-  t('wizard.step2'),
-  t('wizard.step3'),
-  t('wizard.step4'),
-  t('wizard.finish'),
-]
-
+const stepTexts = computed(() => {
+  return [
+    t('wizard.step1'),
+    t('wizard.step2'),
+    t('wizard.step3'),
+    t('wizard.step4'),
+    t('wizard.finish'),
+  ]
+})
 
 const steps: Step[] = stepsConfig
 

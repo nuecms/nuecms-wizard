@@ -1,5 +1,20 @@
+<p align="center">
+  <a href="https://nuecms.com?from=github-repo-logo" target="_blank" rel="noopener noreferrer">
+    <img width="180" src="./public/icon.svg" alt="logo">
+  </a>
+</p>
+<br/>
+
+<p align="center">
+  <a href="https://github.com/nuecms/nuecms-wizard/actions/workflows/release-build.yml"><img src="https://github.com/nuecms/nuecms-wizard/actions/workflows/release-build.yml/badge.svg?branch=main" alt="build status"></a>
+</p>
+<br/>
+
+
+
 # nuecms-wizard
-A wizard for creating a new NueCMS project.
+
+> A user-friendly tool to quickly create and configure a new NueCMS project, guiding you through setup, template selection, and configuration for a seamless start.
 
 
 
