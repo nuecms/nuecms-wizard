@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://nuecms.com?from=github-repo-logo" target="_blank" rel="noopener noreferrer">
-    <img width="180" src="./public/icon.svg" alt="logo">
+    <img width="180" src="./docs/icon.svg" alt="logo">
   </a>
 </p>
 <br/>
