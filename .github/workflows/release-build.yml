@@ -30,7 +30,7 @@ jobs:
       # Zip the dist folder and rename to wizard.zip
       - name: Zip and Rename Build Artifacts
         run: |
-          zip -r wizard.zip dist/* # Ensure dist is the output folder
+          zip -r wizard.zip dist/*
 
       # Upload the wizard.zip file as an artifact
       - name: Upload Artifact
