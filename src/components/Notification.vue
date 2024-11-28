@@ -7,7 +7,11 @@
   >
     <div
       v-show="isVisible"
-      :class="['fixed z-50 top-4 left-1/2 transform -translate-x-1/2 mb-4 p-4 rounded-lg shadow-lg', notificationClasses]"
+      :class="[
+        'fixed z-50 transform mb-4 p-4 rounded-lg shadow-lg',
+        notificationClasses,
+        directionClasses,
+      ]"
       role="alert"
       :style="{ maxWidth: '90%' }"
     >
@@ -25,73 +29,85 @@
           <InfoIcon class="w-6 h-6" stroke="white" />
         </div>
         <div class="flex-1">
-          <p class="text-white">{{ currentMessage }}</p>
+          <p class="text-white">{{ message }}</p>
         </div>
         <button
           @click="closeNotification"
           class="text-white ml-4 hover:text-gray-300"
           aria-label="Close"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
     </div>
   </transition>
 </template>
-
-<script setup lang="ts" name="Notification">
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
 import { CheckCircleIcon, XCircleIcon, InfoIcon } from 'lucide-vue-next'
 
-// Props
+// Props for the Notification
 const props = defineProps({
-  message: {
-    type: String,
-    required: true,
-  },
+  message: String,
   type: {
     type: String,
     default: 'info', // 'success', 'error', or 'info'
   },
   duration: {
     type: Number,
-    default: 3000, // Duration in milliseconds
+    default: 3000,
+  },
+  direction: {
+    type: [String, Array] as PropType<string | [string] | [string, string]>,
+    default: () => ['top', 'center'],
   },
 })
 
-// State
+// State for visibility
 const isVisible = ref(false)
-const currentMessage = ref('')
-let resetTimeout = null // Track the reset timeout
+let resetTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Watch for message prop changes
-watch(() => props.message, (newMessage, oldMessage) => {
-  if (newMessage && newMessage !== currentMessage.value) {
-    // If the message changes, show the notification
-    currentMessage.value = newMessage
-    isVisible.value = true
-
-    // Reset the message after the duration
-    clearTimeout(resetTimeout)
-    resetTimeout = setTimeout(() => {
-      isVisible.value = false
-      // Delay resetting the message until the transition is complete
-      nextTick(() => {
-        currentMessage.value = ''
-      })
-    }, props.duration)
-  }
-})
-
-// Close the notification manually
-const closeNotification = () => {
-  isVisible.value = false
-  currentMessage.value = ''
-  clearTimeout(resetTimeout) // Ensure timeout is cleared on manual close
+// Show notification programmatically
+const showNotification = () => {
+  isVisible.value = true
+  if (resetTimeout) clearTimeout(resetTimeout)
+  resetTimeout = setTimeout(() => {
+    isVisible.value = false
+    nextTick(() => {
+      emitClose()
+    })
+  }, props.duration)
 }
 
-// Notification type classes
+// Close notification manually
+const closeNotification = () => {
+  isVisible.value = false
+  if (resetTimeout) clearTimeout(resetTimeout)
+  nextTick(() => {
+    emitClose()
+  })
+}
+
+// Emit close event
+const emitClose = () => {
+  const event = new CustomEvent('close-notification')
+  window.dispatchEvent(event)
+}
+
+// Notification style classes
 const notificationClasses = computed(() => {
   switch (props.type) {
     case 'success':
@@ -105,19 +121,45 @@ const notificationClasses = computed(() => {
   }
 })
 
-// Transition methods for the slide-down effect
-const beforeEnter = (el) => {
+// Compute position classes based on `direction`
+const directionClasses = computed(() => {
+  const directions = Array.isArray(props.direction) ? props.direction : [props.direction]
+
+  const verticalMap: Record<string, string> = {
+    top: 'top-4',
+    bottom: 'bottom-4',
+    center: 'top-1/2 transform -translate-y-1/2',
+  }
+
+  const horizontalMap: Record<string, string> = {
+    left: 'left-4',
+    right: 'right-4',
+    center: 'left-1/2 transform -translate-x-1/2',
+  }
+
+  const verticalClass = verticalMap[directions[0] || 'top']
+  const horizontalClass = horizontalMap[directions[1] || 'center']
+
+  return `${verticalClass} ${horizontalClass}`
+})
+
+// Transition methods
+const beforeEnter = (el: HTMLElement) => {
   el.classList.add('translate-y-[-100%]')
 }
-const enter = (el, done) => {
-  el.offsetHeight // trigger reflow to restart transition
+const enter = (el: HTMLElement, done: () => void) => {
+  el.offsetHeight
   el.classList.remove('translate-y-[-100%]')
   el.classList.add('transition-transform', 'transform', 'duration-300', 'ease-out')
   done()
 }
-const leave = (el, done) => {
+const leave = (el: HTMLElement, done: () => void) => {
   el.classList.add('translate-y-[-100%]')
   el.classList.add('transition-transform', 'transform', 'duration-300', 'ease-in')
   done()
 }
+
+// Trigger the notification when the component is mounted
+showNotification()
 </script>
+

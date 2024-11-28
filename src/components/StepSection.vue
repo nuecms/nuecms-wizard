@@ -22,7 +22,7 @@
 <script setup lang="ts" name="Step">
 import { defineProps } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Step } from '../types'
+import type { Step } from '@/types'
 
 // i18n setup
 const { t } = useI18n()

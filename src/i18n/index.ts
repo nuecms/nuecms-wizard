@@ -1,5 +1,5 @@
 import { createI18n } from 'vue-i18n'
-import { messages } from '../config'
+import { messages } from '@/config'
 
 export const i18n = createI18n({
   legacy: false,

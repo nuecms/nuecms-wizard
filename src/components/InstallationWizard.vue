@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-6">
-    <Notification v-bind="notifyData" />
     <div class="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
       <div class="p-8">
         <!-- Layout with Setup Guide on the Top Side -->
@@ -106,10 +105,6 @@
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500">
                 {{ t('wizard.prev') }}
               </button>
-              <!-- <button v-if="currentStep === 0"   :disabled="!isLicenseAccepted" @click="nextStep" type="button"
-                  class="px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-300">
-                  {{  t('wizard.next') }}
-              </button> -->
               <button v-if="currentStep === 0" :class="{
                 'px-4 py-2 w-full bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500': true,
                 'bg-gray-300 opacity-50': !isLicenseAccepted
@@ -157,12 +152,14 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CheckCircleIcon, XCircleIcon } from 'lucide-vue-next'
-import Notification from './Notification.vue'
 import StepSection from './StepSection.vue'
 import StepIndicator from './StepIndicator.vue'
-import { languageLabels, defaultConfig, stepsConfig } from '../config'
-import { postData, getData } from '../utils/request'
-import { Step, Config } from '../types'
+import { languageLabels, defaultConfig, stepsConfig } from '@/config'
+import { postData, getData } from '@/utils/request'
+import { confirm } from '@/utils/confirm'
+import { notify } from '@/utils/notify'
+import { Step, Config } from '@/types'
+import wizardConfig from '../../wizard.config'
 const { t, messages, locale, availableLocales } = useI18n()
 
 // Reactive state for license acceptance
@@ -194,12 +191,6 @@ const stepTexts = [
 
 const steps: Step[] = stepsConfig
 
-const notifyData = reactive({
-  message: '',
-  type: 'info',
-  duration: 3000,
-})
-
 
 // fetch system overview data
 const fetchSystemOverview = async () => {
@@ -212,29 +203,58 @@ const fetchSystemOverview = async () => {
 }
 
 onMounted(() => {
-  notify('Welcome to the installation wizard', 'info')
+  notify({
+    message: 'Welcome to the installation wizard',
+  })
   fetchSystemOverview()
 })
 
-const notify = (message: string, type: string = 'info') => {
-  notifyData.message = message
-  notifyData.type = type
-  setTimeout(() => {
-    notifyData.message = ''
-  }, notifyData.duration)
-}
 
 
 // Modify config dynamically in nextStep
 const nextStep = async (event: Event) => {
   event.preventDefault()
-  console.log('nextStep')
   if (currentStep.value === 0) {
     // License step - check if the user accepted the license
     if (!isLicenseAccepted.value) {
-      notify(t('wizard.licenseError'), 'error') // Handle license acceptance error
+      notify({
+        message: t('wizard.licenseError'),
+        type: 'error'
+      }) // Handle license acceptance error
       return
+    } else {
+      // check /data/install.lock file
+      try {
+        const res = await getData('/api/status')
+        if (res.success && res.data.locked) {
+          if (wizardConfig.canIgnoreLock) {
+            currentStep.value++
+          } else {
+            confirm({
+              title: t('wizard.installLocked'),
+              message: t('wizard.installLockedMessage'),
+              confirmText: t('wizard.installLockedConfirm'),
+              cancelText: t('wizard.installLockedCancel'),
+              type: 'info'
+            }).then((value) => {
+              if (value) {
+                currentStep.value++
+              }
+            })
+          }
+          return
+        } else {
+          currentStep.value++
+        }
+      } catch (error: Error | any) {
+        notify({
+          message: t('wizard.error', { msg: error.message }),
+          type: 'error'
+        })
+        return
+      }
     }
+    return
   }
   if (currentStep.value < steps.length - 1) {
     currentStep.value++

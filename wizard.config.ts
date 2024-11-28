@@ -15,4 +15,6 @@ export default {
 
   // sql files
   sqlfile: '/data/install.sql',
+
+  canIgnoreLock: false,
 }
