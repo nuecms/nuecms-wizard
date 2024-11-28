@@ -1,60 +1,59 @@
 #!/bin/bash
 
-# Ensure GITHUB_TAG is set (or use default version)
+# Variables
 VERSION="v1.0.7"
-
-# Define the GitHub release URL (adjust with your repo details)
 GITHUB_REPO="nuecms/nuecms-wizard"
-DOWNLOAD_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/wizard.zip"
+WIZARD_URL="https://github.com/$GITHUB_REPO/releases/download/$VERSION/wizard.zip"
+DEMO_REPO_URL="https://github.com/nuecms/demo-repository/archive/refs/heads/main.zip"
 
-# Download the wizard.zip from the latest release
-echo "Downloading $DOWNLOAD_URL..."
-curl -L -o wizard.zip "$DOWNLOAD_URL"
+# Functions
+cleanup() {
+    echo "Cleaning up..."
+    rm -rf dist wizard.zip demo-repository.zip demo-repository-main
+    echo "Cleanup complete."
+    kill $B_PID
+}
 
-# Unzip the downloaded file
-echo "Unzipping wizard.zip..."
-unzip -o wizard.zip -d .
+download_and_unzip() {
+    local url=$1
+    local output_zip=$2
+    echo "Downloading from $url..."
+    curl -L -o "$output_zip" "$url"
+    echo "Unzipping $output_zip..."
+    unzip -o "$output_zip"
+}
 
-# Navigate into the unzipped directory and run the Node.js server
-echo "Running server..."
+install_dependencies() {
+    if ! command -v pnpm &>/dev/null; then
+        echo "pnpm not found. Install it with: npm install -g pnpm"
+        exit 1
+    fi
+    echo "Installing dependencies with pnpm..."
+    pnpm install
+}
 
-node dist/server.cjs
+start_server() {
+    echo "Starting Node.js server..."
+    node dist/server.cjs
+}
 
-# Clean up by removing the zip file after use
+# Main Script Execution
+trap cleanup EXIT
 
-rm wizard.zip
+# Step 1: Set up wizard
+download_and_unzip "$WIZARD_URL" "wizard.zip"
 
-echo "Installation and server start complete."
+(
+  # Step 2: Set up demo repository
+  download_and_unzip "$DEMO_REPO_URL" "demo-repository.zip"
+  mv -f demo-repository-main/{.,}* .
+  rm -rf demo-repository-main
 
-# todo remove the demo-repository
+  # Step 3: Install dependencies and start server
+  install_dependencies
+) &
+B_PID=$!
 
-# Step 2: Download the repository as 'demo-repository.zip'
-wget -O demo-repository.zip https://github.com/nuecms/demo-repository/archive/refs/heads/main.zip
 
-# Step 3: Unzip the downloaded file
-unzip demo-repository.zip
 
-# Step 4: Move the contents of the extracted folder to the current directory
-mv demo-repository-main/* .
-
-# Step 5: Remove the extracted folder and the ZIP file
-rm -rf demo-repository-main demo-repository.zip
-
-# Step 1: Check if pnpm is installed
-if ! command -v pnpm &> /dev/null; then
-    echo "pnpm is not installed. Please install pnpm first."
-    echo "You can install pnpm using the following command:"
-    echo "npm install -g pnpm"
-    exit 1
-else
-    echo "pnpm is already installed. Proceeding with installation of dependencies..."
-fi
-
-# Step 6: Run pnpm install in the background
-echo "Installing dependencies with pnpm in the background..."
-nohup pnpm install &
-
-# Optionally, you can save the process output to a file:
-# nohup pnpm install > pnpm-install.log 2>&1 &
-
-echo "pnpm install is running in the background. Check 'nohup.out' for logs."
+start_server

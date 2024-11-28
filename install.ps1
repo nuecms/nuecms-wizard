@@ -1,62 +1,68 @@
-# Ensure GITHUB_TAG is set (or use default version)
-$VERSION="v1.0.7"
-
-# Define the GitHub release URL (adjust with your repo details)
+# Variables
+$VERSION = "v1.0.7"
 $GITHUB_REPO = "nuecms/nuecms-wizard"
-$DOWNLOAD_URL = "https://github.com/$GITHUB_REPO/releases/download/$VERSION/wizard.zip"
+$WIZARD_URL = "https://github.com/$GITHUB_REPO/releases/download/$VERSION/wizard.zip"
+$DEMO_REPO_URL = "https://github.com/nuecms/demo-repository/archive/refs/heads/main.zip"
+$B_PID = $null
 
-# Download the wizard.zip from the latest release
-Write-Host "Downloading $DOWNLOAD_URL..."
-Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile "wizard.zip"
-
-# Unzip the downloaded file
-Write-Host "Unzipping wizard.zip..."
-Expand-Archive -Path "wizard.zip" -DestinationPath "."
-
-# Navigate into the unzipped directory and run the Node.js server
-Write-Host "Running server..."
-node dist/server.cjs
-
-# Clean up by removing the zip file after use
-
-Remove-Item -Path "wizard.zip"
-
-Write-Host "Installation and server start complete."
-
-
-
-# Step 2: Download the repository as 'demo-repository.zip'
-Invoke-WebRequest -Uri https://github.com/nuecms/demo-repository/archive/refs/heads/main.zip -OutFile demo-repository.zip
-
-# Step 3: Unzip the downloaded file
-Expand-Archive -Path demo-repository.zip -DestinationPath .
-
-# Step 4: Move the contents of the extracted folder to the current directory
-Move-Item -Path .\demo-repository-main\* -Destination .\
-
-# Step 5: Remove the extracted folder and the ZIP file
-Remove-Item -Recurse -Force .\demo-repository-main
-Remove-Item -Force .\demo-repository.zip
-
-
-# Step 1: Check if pnpm is installed
-$pnpmExists = Get-Command pnpm -ErrorAction SilentlyContinue
-
-if ($pnpmExists) {
-    Write-Host "pnpm is already installed. Proceeding with installation of dependencies..."
-} else {
-    Write-Host "pnpm is not installed. Please install pnpm first."
-    Write-Host "You can install pnpm using the following command:"
-    Write-Host "npm install -g pnpm"
-    exit
+# Functions
+function Cleanup {
+    Write-Host "Cleaning up..."
+    Remove-Item -Recurse -Force dist,wizard.zip,demo-repository.zip,demo-repository-main -ErrorAction SilentlyContinue
+    Write-Host "Cleanup complete."
+    if ($B_PID) {
+        Stop-Process -Id $B_PID -Force -ErrorAction SilentlyContinue
+    }
 }
 
-# Step 6: Run pnpm install in the background
-Write-Host "Running pnpm install in the background..."
+function DownloadAndUnzip {
+    param (
+        [string]$Url,
+        [string]$OutputZip
+    )
+    Write-Host "Downloading from $Url..."
+    Invoke-WebRequest -Uri $Url -OutFile $OutputZip
+    Write-Host "Unzipping $OutputZip..."
+    Expand-Archive -Path $OutputZip -DestinationPath . -Force
+}
 
-# Start pnpm install in the background and redirect output to a log file
-Start-Process pnpm -ArgumentList "install" -NoNewWindow -RedirectStandardOutput "pnpm-install.log" -RedirectStandardError "pnpm-install-error.log" -WindowStyle Hidden
+function InstallDependencies {
+    if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+        Write-Host "pnpm not found. Install it with: npm install -g pnpm"
+        exit 1
+    }
+    Write-Host "Installing dependencies with pnpm..."
+    pnpm install
+}
 
-Write-Host "pnpm install is running in the background. Check 'pnpm-install.log' and 'pnpm-install-error.log' for logs."
+function StartServer {
+    Write-Host "Starting Node.js server..."
+    Start-Process "node" -ArgumentList "dist/server.cjs" -NoNewWindow
+}
 
+# Main Script Execution
+try {
+    # Ensure cleanup runs on exit
+    Register-EngineEvent PowerShell.Exiting -Action { Cleanup }
 
+    # Step 1: Set up wizard
+    DownloadAndUnzip -Url $WIZARD_URL -OutputZip "wizard.zip"
+
+    Start-Job -ScriptBlock {
+        # Step 2: Set up demo repository
+        DownloadAndUnzip -Url $using:DEMO_REPO_URL -OutputZip "demo-repository.zip"
+        Move-Item -Path "demo-repository-main/*", "demo-repository-main/.*" -Destination . -Force -ErrorAction SilentlyContinue
+        Remove-Item -Recurse -Force "demo-repository-main" -ErrorAction SilentlyContinue
+
+        # Step 3: Install dependencies
+        InstallDependencies
+    } -PassThru | ForEach-Object { $B_PID = $_.Id }
+
+    # Step 4: Start server
+    StartServer
+}
+catch {
+    Write-Host "An error occurred: $_"
+    Cleanup
+    exit 1
+}
