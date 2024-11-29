@@ -1,5 +1,5 @@
 # Variables
-$VERSION = "v1.0.8"
+$VERSION = "v1.0.9"
 $GITHUB_REPO = "nuecms/nuecms-wizard"
 $WIZARD_URL = "https://github.com/$GITHUB_REPO/releases/download/$VERSION/wizard.zip"
 $DEMO_REPO_URL = "https://github.com/nuecms/demo-repository/archive/refs/heads/main.zip"
